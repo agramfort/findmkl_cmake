@@ -17,13 +17,26 @@ cache:
   # - C:\Program Files (x86)\IntelSWTools
   # - C:\w_mkl_2018.0.124.exe
 
+init:
+  - git config --global core.autocrlf input
+
+clone_depth: 5
+
 environment:
   matrix:
     # - BLAS_VERSION: Intel10_32
-    # - BLAS_VERSION: Intel10_64lp
+    - BLAS_VERSION: Intel10_64lp
+      BLA_STATIC: ON
     - BLAS_VERSION: Intel10_64lp_seq
-    # - BLAS_VERSION: Intel
+      BLA_STATIC: ON
+    - BLAS_VERSION: Intel10_64lp
+      BLA_STATIC: OFF
+    - BLAS_VERSION: Intel10_64lp_seq
+      BLA_STATIC: OFF
 
+skip_commits:
+# Add [av skip] to commit messages
+  message: /\[av skip\]/
 
 # init:
 #   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
@@ -45,7 +58,6 @@ install:
       }
       $env:LD_MKL_PATH='C:\Program Files (x86)\IntelSWTools\compilers_and_libraries_2018.0.124\windows\mkl\lib\intel64_win\'
       $env:LIB="$env:LD_MKL_PATH;$env:LIB"
-  - nuget install openblas -o C:\
 
 
 before_build:
@@ -54,7 +66,7 @@ before_build:
   - ps: |
       mkdir build
       cd build
-  - cmake -DBLA_VENDOR=%BLAS_VERSION% -G "Visual Studio 14 2015 Win64" ..
+  - cmake -DBLA_VENDOR=%BLAS_VERSION% -DBLA_STATIC=%BLA_STATIC% -G "Visual Studio 14 2015 Win64" ..
 
 build_script:
   - echo DONE
@@ -63,11 +75,10 @@ test_script:
 
 deploy: off
 
-on_failure:
-  - appveyor PushArtifact CMakeCache.txt
-  - appveyor PushArtifact CMakeFiles/CMakeOutput.log
-  - appveyor PushArtifact CMakeFiles/CMakeError.log
-
+# on_failure:
+#   - appveyor PushArtifact CMakeCache.txt
+#   - appveyor PushArtifact CMakeFiles/CMakeOutput.log
+#   - appveyor PushArtifact CMakeFiles/CMakeError.log
 
 # on_finish:
 #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
